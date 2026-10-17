@@ -1,0 +1,11 @@
+@NotifyX.Api_HostAddress = http://localhost:5050
+
+GET {{NotifyX.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{NotifyX.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
