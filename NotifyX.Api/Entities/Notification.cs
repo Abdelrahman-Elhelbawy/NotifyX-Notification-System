@@ -27,6 +27,7 @@ public class Notification
     public DateTimeOffset? ScheduledAt { get; set; }
 
     public bool IsRead { get; set; } = false;
+    public DateTimeOffset? ReadAtUtc { get; set; }
 
     // Metadata is a JSON string that can hold additional information about the notification.
     public string? Metadata { get; set; } 

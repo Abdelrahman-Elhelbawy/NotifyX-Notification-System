@@ -51,6 +51,9 @@ namespace NotifyX.Api.Data.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<DateTimeOffset?>("ReadAtUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset?>("ScheduledAt")
                         .HasColumnType("datetimeoffset");
 
@@ -67,7 +70,12 @@ namespace NotifyX.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Notifications_ReadState", "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR ([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Notifications_Type", "[Type] IN (1, 2, 3, 4)");
+                        });
                 });
 #pragma warning restore 612, 618
         }

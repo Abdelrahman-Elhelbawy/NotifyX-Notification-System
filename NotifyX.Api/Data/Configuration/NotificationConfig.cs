@@ -27,7 +27,7 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
         modelBuilder.Property(n => n.Priority)
             .IsRequired()
             .HasDefaultValue(0);
-        
+
         modelBuilder.Property(n => n.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -42,6 +42,21 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
         modelBuilder.Property(n => n.Metadata)
             .IsRequired(false)
             .HasColumnType("nvarchar(max)");
-        
+
+        /*
+            1- Add check constraint for Type column to ensure it only contains valid values (1, 2, 3, 4).
+            2- Add check constraint for IsRead and ReadAtUtc columns to ensure that if IsRead is true, ReadAtUtc must not be null, and if IsRead is false, ReadAtUtc must be null.
+        */
+        modelBuilder.ToTable("Notifications", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_Notifications_Type",
+                "[Type] IN (1, 2, 3, 4)");
+
+            table.HasCheckConstraint(
+                "CK_Notifications_ReadState",
+                "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR " +
+                "([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
+        });
     }
 }

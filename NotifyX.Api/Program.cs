@@ -8,10 +8,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 // Add dependencies to the container.
-builder.Services.AddDependencies(builder.Configuration);
+builder.Services.AddConfiguration(builder.Configuration);
 
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
