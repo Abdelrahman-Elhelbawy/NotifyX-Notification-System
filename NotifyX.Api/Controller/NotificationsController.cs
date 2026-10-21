@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NotifyX.Api.Common.Results;
+using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Services.Notifications;
 
 namespace NotifyX.Api.Controllers;
@@ -17,6 +18,31 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.GetAllAsync(cancellationToken);
+
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+    [FromRoute] Guid id,
+    CancellationToken cancellationToken = default)
+    {
+        var result = await _service.GetAsync(
+            id,
+            cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : result.ToProblem();
+    }
+
+    [HttpPost]
+    [Route("")]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateNotificationRequest request,
+        CancellationToken cancellationToken = default!)
+    {
+        var result = await _service.CreateAsync(request, cancellationToken);
 
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }

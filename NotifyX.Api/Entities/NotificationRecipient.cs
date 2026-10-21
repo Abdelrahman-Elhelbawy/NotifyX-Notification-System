@@ -4,7 +4,7 @@ public class NotificationRecipient
 {
     public Guid NotificationId { get; set; }
     public string UserId { get; set; } = null!;
-    public bool? IsRead { get; set; } = false ;
+    public bool IsRead { get; set; }
     public DateTime? ReadAtUtc { get; set; }
 
     // To link with Notification Table

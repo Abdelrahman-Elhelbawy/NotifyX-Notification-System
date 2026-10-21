@@ -35,6 +35,10 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
         modelBuilder.Property(n => n.ScheduledAt)
             .IsRequired(false);
 
+        modelBuilder.Property(n => n.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         modelBuilder.Property(n => n.Metadata)
             .IsRequired(false)
             .HasColumnType("nvarchar(max)");

@@ -27,4 +27,10 @@ public static class NotificationErrors
             "Notification.AlreadyRead",
             "Notification has already been read",
             StatusCodes.Status409Conflict);
+
+    public static readonly Error AtLeastOne =
+        new(
+            "Notification.AtLeastOne",
+            "At least one valid recipient is required.",
+            StatusCodes.Status400BadRequest);
 }

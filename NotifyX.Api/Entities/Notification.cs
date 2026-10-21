@@ -6,13 +6,6 @@ public class Notification
 {
     public Guid Id { get; set; }
 
-    /**
-        -- UserId is an optional foreign key to the user who will receive the notification.
-        -- If UserId is null, the notification is considered a broadcast notification.
-        -- User ID Property , This can be utilized by those who perform an integration.
-    */
-    public Guid? UserId { get; set; }
-
     // Data for the notification, such as the title, body, type, and priority.
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
@@ -27,7 +20,7 @@ public class Notification
     public DateTimeOffset? ScheduledAt { get; set; }
 
     // To Apply a Soft Deleted , A Default Value if False
-    public bool? IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
 
     // Metadata is a JSON string that can hold additional information about the notification.
     public string? Metadata { get; set; }

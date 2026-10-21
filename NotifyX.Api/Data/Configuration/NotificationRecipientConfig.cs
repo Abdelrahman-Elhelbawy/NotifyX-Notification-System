@@ -17,8 +17,13 @@ public class NotificationRecipientConfig : IEntityTypeConfiguration<Notification
         });
 
         modelBuilder.Property(n => n.IsRead)
-            .IsRequired(false)
+            .IsRequired()
             .HasDefaultValue(false);
+
+        modelBuilder.HasOne(x => x.Notification)
+            .WithMany(x => x.Recipients)
+            .HasForeignKey(x => x.NotificationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         /*
             1- Add check constraint for IsRead and ReadAtUtc columns to ensure that if IsRead is true, ReadAtUtc must not be null, and if IsRead is false, ReadAtUtc must be null.
