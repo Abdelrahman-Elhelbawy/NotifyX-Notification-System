@@ -11,6 +11,7 @@ public class NotificationService(
 {
     private readonly INotificationRepository _repository = repository;
 
+    /// Provides operations for creating, retrieving, updating, and deleting notifications.
     public async Task<Result<NotificationResponse>> CreateAsync(
         CreateNotificationRequest request,
         CancellationToken cancellationToken = default!)
@@ -70,6 +71,7 @@ public class NotificationService(
         return Result<NotificationResponse>.Success(response);
     }
 
+    /// Retrieves all notifications.
     public async Task<Result<List<Notification>>> GetAllAsync(
         CancellationToken cancellationToken = default!)
     {
@@ -79,7 +81,10 @@ public class NotificationService(
         return Result<List<Notification>>.Success([]);
     }
 
-    public async Task<Result<NotificationResponse>> GetAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    /// Retrieves a notification by its identifier.
+    public async Task<Result<NotificationResponse>> GetAsync(
+        Guid notificationId, 
+        CancellationToken cancellationToken = default)
     {
         var result = await _repository.GetAsync(notificationId, cancellationToken);
 
@@ -98,6 +103,7 @@ public class NotificationService(
         return Result<NotificationResponse>.Success(response);
     }
 
+    /// Updates a notification.
     public async Task<Result<NotificationResponse>> UpdateAsync(
         Guid notificationId,
         UpdateNotificationRequest request,
@@ -122,6 +128,34 @@ public class NotificationService(
         await _repository.UpdateAsync(
             notificationId,
             notification,
+            cancellationToken);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+
+        var response = new NotificationResponse(
+            notification.Title,
+            notification.Body,
+            notification.Type,
+            notification.Metadata);
+
+        return Result<NotificationResponse>.Success(response);
+    }
+
+    /// Deletes a notification by its identifier.
+    public async Task<Result<NotificationResponse>> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    {
+        var notification = await _repository.GetAsync(
+            notificationId,
+            cancellationToken);
+
+        if (notification is null || notification.IsDeleted)
+        {
+            return Result<NotificationResponse>.Failure(
+                NotificationErrors.NotFound);
+        }
+
+        await _repository.DeleteAsync(
+            notificationId,
             cancellationToken);
 
         await _repository.SaveChangesAsync(cancellationToken);

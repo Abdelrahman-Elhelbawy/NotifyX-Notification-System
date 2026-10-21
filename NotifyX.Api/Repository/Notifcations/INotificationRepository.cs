@@ -1,6 +1,4 @@
-using NotifyX.Api.Common.Results;
 using NotifyX.Api.Entities;
-using NotifyX.Api.Models.Notifications;
 
 namespace NotifyX.Api.Repositories.Notifications;
 
@@ -15,6 +13,12 @@ public interface INotificationRepository
         CancellationToken cancellationToken = default!);
 
     /// <summary>
+    /// Retrieves all notifications asynchronously.
+    /// </summary>
+    Task GetAllAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves a notification by its identifier asynchronously.
     /// </summary>
     Task<Notification?> GetAsync(
@@ -23,14 +27,18 @@ public interface INotificationRepository
     );
 
     /// <summary>
-    /// Retrieves all notifications asynchronously.
+    /// Updates an existing notification asynchronously.
     /// </summary>
-    Task GetAllAsync(
-        CancellationToken cancellationToken = default);
-
-     Task<bool> UpdateAsync(
+    Task<bool> UpdateAsync(
         Guid notificationId,
         Notification notification,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a notification by its identifier asynchronously.
+    /// </summary>
+    Task<bool> DeleteAsync(
+        Guid notificationId,
         CancellationToken cancellationToken = default);
 
     /// <summary>

@@ -31,6 +31,7 @@ public class NotificationRepository(
             .ToListAsync(cancellationToken);
     }
 
+    /// Retrieves a notification by its identifier asynchronously.
     public async Task<Notification?> GetAsync(
      Guid notificationId,
      CancellationToken cancellationToken = default)
@@ -42,12 +43,7 @@ public class NotificationRepository(
                 cancellationToken);
     }
 
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
-    }
-
+    /// Updates an existing notification asynchronously.
     public async Task<bool> UpdateAsync(
         Guid notificationId,
         Notification notification,
@@ -68,5 +64,27 @@ public class NotificationRepository(
         existingNotification.ScheduledAt = notification.ScheduledAt;
         existingNotification.Metadata = notification.Metadata;
         return true;
+    }
+    /// Deletes a notification by its identifier asynchronously.
+    public async Task<bool> DeleteAsync(
+    Guid notificationId,
+    CancellationToken cancellationToken = default)
+    {
+        var existingNotification = await _context.Notifications
+            .FirstOrDefaultAsync(
+                n => n.Id == notificationId,
+                cancellationToken);
+
+        if (existingNotification is null)
+            return false;
+
+        existingNotification.IsDeleted = true;
+        return true;
+    }
+
+    /// Saves pending notification changes asynchronously.
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _context.SaveChangesAsync(cancellationToken);
     }
 }
