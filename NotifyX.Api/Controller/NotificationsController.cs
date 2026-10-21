@@ -46,4 +46,16 @@ public class NotificationsController(
 
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
+
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdateNotificationRequest request,
+        CancellationToken cancellationToken = default!)
+    {
+        var result = await _service.UpdateAsync(id, request, cancellationToken);
+
+        return result.IsSuccess ? Ok("Updated Successfully") : result.ToProblem();
+    }
 }

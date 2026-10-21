@@ -28,6 +28,11 @@ public interface INotificationRepository
     Task GetAllAsync(
         CancellationToken cancellationToken = default);
 
+     Task<bool> UpdateAsync(
+        Guid notificationId,
+        Notification notification,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Saves pending notification changes asynchronously.
     /// </summary>

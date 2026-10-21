@@ -14,6 +14,12 @@ public interface INotificationService
         CreateNotificationRequest request,
         CancellationToken cancellationToken = default!);
 
+    Task<Result<NotificationResponse>> UpdateAsync(
+        Guid notificationId,
+        UpdateNotificationRequest request,
+        CancellationToken cancellationToken = default!
+    );
+
     Task<Result<List<Notification>>> GetAllAsync(
         CancellationToken cancellationToken = default);
 }

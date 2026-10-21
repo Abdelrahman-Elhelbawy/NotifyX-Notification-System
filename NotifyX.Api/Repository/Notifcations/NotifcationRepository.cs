@@ -41,9 +41,32 @@ public class NotificationRepository(
                 n => n.Id == notificationId,
                 cancellationToken);
     }
-    
+
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> UpdateAsync(
+        Guid notificationId,
+        Notification notification,
+        CancellationToken cancellationToken = default!)
+    {
+        var existingNotification = await _context.Notifications
+            .FirstOrDefaultAsync(
+                n => n.Id == notificationId,
+                cancellationToken);
+
+        if (existingNotification is null)
+            return false;
+
+        existingNotification.Title = notification.Title;
+        existingNotification.Body = notification.Body;
+        existingNotification.Type = notification.Type;
+        existingNotification.Priority = notification.Priority;
+        existingNotification.ScheduledAt = notification.ScheduledAt;
+        existingNotification.Metadata = notification.Metadata;
+        return true;
     }
 }

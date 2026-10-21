@@ -97,4 +97,41 @@ public class NotificationService(
 
         return Result<NotificationResponse>.Success(response);
     }
+
+    public async Task<Result<NotificationResponse>> UpdateAsync(
+        Guid notificationId,
+        UpdateNotificationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = await _repository.GetAsync(
+            notificationId,
+            cancellationToken);
+
+        if (notification is null)
+        {
+            return Result<NotificationResponse>.Failure(
+                NotificationErrors.NotFound);
+        }
+
+        notification.Title = request.Title ?? notification.Title;
+        notification.Body = request.Body ?? notification.Body;
+        notification.Type = request.Type ?? notification.Type;
+        notification.Priority = request.Priority ?? notification.Priority;
+        notification.Metadata = request.Metadata ?? notification.Metadata;
+
+        await _repository.UpdateAsync(
+            notificationId,
+            notification,
+            cancellationToken);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+
+        var response = new NotificationResponse(
+            notification.Title,
+            notification.Body,
+            notification.Type,
+            notification.Metadata);
+
+        return Result<NotificationResponse>.Success(response);
+    }
 }
