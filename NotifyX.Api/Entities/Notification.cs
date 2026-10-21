@@ -26,9 +26,13 @@ public class Notification
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ScheduledAt { get; set; }
 
-    public bool IsRead { get; set; } = false;
-    public DateTimeOffset? ReadAtUtc { get; set; }
+    // To Apply a Soft Deleted , A Default Value if False
+    public bool? IsDeleted { get; set; } = false;
 
     // Metadata is a JSON string that can hold additional information about the notification.
-    public string? Metadata { get; set; } 
+    public string? Metadata { get; set; }
+
+    // Ref to NotificationRecipient Table
+    public ICollection<NotificationRecipient> Recipients { get; set; }
+    = new List<NotificationRecipient>();
 }

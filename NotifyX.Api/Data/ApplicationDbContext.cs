@@ -8,6 +8,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : DbContext(options)
 {
     public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<NotificationRecipient> NotificationRecipients { get; set; } = null!;
 
     protected override void OnModelCreating(
     ModelBuilder modelBuilder)

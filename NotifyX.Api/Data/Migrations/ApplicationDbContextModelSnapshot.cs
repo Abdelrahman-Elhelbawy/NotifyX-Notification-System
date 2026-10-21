@@ -38,10 +38,8 @@ namespace NotifyX.Api.Data.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<bool>("IsRead")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Metadata")
                         .HasColumnType("nvarchar(max)");
@@ -50,9 +48,6 @@ namespace NotifyX.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
-
-                    b.Property<DateTimeOffset?>("ReadAtUtc")
-                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("ScheduledAt")
                         .HasColumnType("datetimeoffset");
@@ -72,10 +67,48 @@ namespace NotifyX.Api.Data.Migrations
 
                     b.ToTable("Notifications", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Notifications_ReadState", "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR ([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
-
                             t.HasCheckConstraint("CK_Notifications_Type", "[Type] IN (1, 2, 3, 4)");
                         });
+                });
+
+            modelBuilder.Entity("NotifyX.Api.Entities.NotificationRecipient", b =>
+                {
+                    b.Property<Guid>("NotificationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("NotificationId", "UserId");
+
+                    b.ToTable("NotificationRecipients", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Notifications_ReadState", "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR ([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("NotifyX.Api.Entities.NotificationRecipient", b =>
+                {
+                    b.HasOne("NotifyX.Api.Entities.Notification", "Notification")
+                        .WithMany("Recipients")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
+                });
+
+            modelBuilder.Entity("NotifyX.Api.Entities.Notification", b =>
+                {
+                    b.Navigation("Recipients");
                 });
 #pragma warning restore 612, 618
         }

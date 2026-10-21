@@ -35,13 +35,10 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
         modelBuilder.Property(n => n.ScheduledAt)
             .IsRequired(false);
 
-        modelBuilder.Property(n => n.IsRead)
-            .IsRequired()
-            .HasDefaultValue(false);
-
         modelBuilder.Property(n => n.Metadata)
             .IsRequired(false)
             .HasColumnType("nvarchar(max)");
+
 
         /*
             1- Add check constraint for Type column to ensure it only contains valid values (1, 2, 3, 4).
@@ -52,11 +49,6 @@ public class NotificationConfig : IEntityTypeConfiguration<Notification>
             table.HasCheckConstraint(
                 "CK_Notifications_Type",
                 "[Type] IN (1, 2, 3, 4)");
-
-            table.HasCheckConstraint(
-                "CK_Notifications_ReadState",
-                "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR " +
-                "([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
         });
     }
 }

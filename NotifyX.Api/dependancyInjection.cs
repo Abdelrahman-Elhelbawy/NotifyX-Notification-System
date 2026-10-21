@@ -2,6 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.Common.Exceptions;
 using NotifyX.Api.Data;
 
+using NotifyX.Api.Repositories.Notifications;
+using NotifyX.Api.Repository.Notifcations;
+using NotifyX.Api.Services.Notifications;
+
 namespace NotifyX.Api;
 
 public static class DependencyInjection
@@ -15,6 +19,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services
+            .AddScopedConfiguration()
             .AddDatabaseConfiguration(configuration)
             .AddDefaultConfiguration();
 
@@ -36,12 +41,33 @@ public static class DependencyInjection
         return services;
     }
 
+    /*
+        -- 
+    */
     private static IServiceCollection AddDefaultConfiguration(this IServiceCollection services)
     {
         // Add Configuration for Add Global Exception Handler
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
+        return services;
+    }
+
+    /*
+        -- Add Repositories Scoped
+        -- Add Services Scoped
+    */
+    private static IServiceCollection AddScopedConfiguration(this IServiceCollection services)
+    {
+        // Register Repositories
+        services.AddScoped<
+            INotificationRepository,
+            NotificationRepository>();
+
+        // Register Services
+        services.AddScoped<
+            INotificationService,
+            NotificationService>();
 
         return services;
     }
