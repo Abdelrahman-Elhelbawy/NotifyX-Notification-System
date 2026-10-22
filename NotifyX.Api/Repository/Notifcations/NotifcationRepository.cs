@@ -23,10 +23,10 @@ public class NotificationRepository(
     }
 
     /// Retrieves all notifications asynchronously.
-    public async Task GetAllAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<List<Notification>> GetAllAsync(
+        CancellationToken cancellationToken = default!)
     {
-        await _context.Notifications
+        return await _context.Notifications
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -34,7 +34,7 @@ public class NotificationRepository(
     /// Retrieves a notification by its identifier asynchronously.
     public async Task<Notification?> GetAsync(
      Guid notificationId,
-     CancellationToken cancellationToken = default)
+     CancellationToken cancellationToken = default!)
     {
         return await _context.Notifications
             .AsNoTracking()

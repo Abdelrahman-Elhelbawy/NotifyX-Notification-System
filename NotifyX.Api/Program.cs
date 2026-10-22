@@ -1,3 +1,4 @@
+// using Microsoft.AspNetCore.SignalR;
 using NotifyX.Api;
 using NotifyX.Api.Hubs;
 
@@ -11,6 +12,7 @@ builder.Services.AddControllers();
 // Add dependencies to the container.
 builder.Services.AddConfiguration(builder.Configuration);
 
+// builder.Services.AddSingleton<IUserIdProvider, QueryStringUserIdProvider>();
 
 var app = builder.Build();
 
@@ -21,6 +23,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseCors("NotificationTest");
 
 app.UseHttpsRedirection();
 app.MapControllers();

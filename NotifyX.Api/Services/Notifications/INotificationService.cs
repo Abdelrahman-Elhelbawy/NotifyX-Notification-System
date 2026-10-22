@@ -16,7 +16,7 @@ public interface INotificationService
     /// <summary>
     /// Retrieves all notifications.
     /// </summary>
-    Task<Result<List<Notification>>> GetAllAsync(
+    Task<Result<List<NotificationResponse>>> GetAllAsync(
         CancellationToken cancellationToken = default!);
 
     /// <summary>

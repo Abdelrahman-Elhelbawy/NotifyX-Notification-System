@@ -25,7 +25,6 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.CreateAsync(request, cancellationToken);
-
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
 

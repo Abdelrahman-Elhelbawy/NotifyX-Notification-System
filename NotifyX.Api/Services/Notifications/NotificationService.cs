@@ -1,22 +1,28 @@
+using Microsoft.AspNetCore.SignalR;
 using NotifyX.Api.Common.Errors;
 using NotifyX.Api.Common.Results;
 using NotifyX.Api.Entities;
+using NotifyX.Api.Hubs;
 using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Repositories.Notifications;
 
 namespace NotifyX.Api.Services.Notifications;
 
 public class NotificationService(
-    INotificationRepository repository) : INotificationService
+    INotificationRepository repository,
+    IHubContext<NotificationHub> hubContext,
+    ILogger<NotificationService> logger
+    ) : INotificationService
 {
     private readonly INotificationRepository _repository = repository;
+    private readonly IHubContext<NotificationHub> _hubContext = hubContext;
+    private readonly ILogger<NotificationService> _logger = logger;
 
     /// Provides operations for creating, retrieving, updating, and deleting notifications.
     public async Task<Result<NotificationResponse>> CreateAsync(
         CreateNotificationRequest request,
-        CancellationToken cancellationToken = default!)
+        CancellationToken cancellationToken = default)
     {
-
         if (request.UserIds is null || request.UserIds.Count == 0)
         {
             return Result<NotificationResponse>.Failure(
@@ -68,22 +74,68 @@ public class NotificationService(
             notification.Type,
             notification.Metadata);
 
+        var payload = new
+        {
+            notification.Id,
+            response.Title,
+            response.Body,
+            response.Type,
+            response.Metadata,
+            notification.CreatedAt
+        };
+
+        foreach (var userId in userIds)
+        {
+            try
+            {
+                await _hubContext.Clients
+                    .User(userId)
+                    .SendAsync(
+                        "ReceiveNotification",
+                        payload,
+                        cancellationToken);
+            }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                // TODO : 
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "SignalR delivery failed for notification {NotificationId} " +
+                    "and user {UserId}.",
+                    notification.Id,
+                    userId);
+            }
+        }
+
         return Result<NotificationResponse>.Success(response);
     }
 
     /// Retrieves all notifications.
-    public async Task<Result<List<Notification>>> GetAllAsync(
+    public async Task<Result<List<NotificationResponse>>> GetAllAsync(
         CancellationToken cancellationToken = default!)
     {
         // TODO : Add Pagnation (skip)
-        await _repository.GetAllAsync(cancellationToken);
+        var result = await _repository.GetAllAsync(cancellationToken);
 
-        return Result<List<Notification>>.Success([]);
+        var response = result
+            .Select(notification => new NotificationResponse(
+                notification.Title,
+                notification.Body,
+                notification.Type,
+                notification.Metadata))
+            .ToList();
+
+        return Result<List<NotificationResponse>>.Success(response);
     }
 
     /// Retrieves a notification by its identifier.
     public async Task<Result<NotificationResponse>> GetAsync(
-        Guid notificationId, 
+        Guid notificationId,
         CancellationToken cancellationToken = default)
     {
         var result = await _repository.GetAsync(notificationId, cancellationToken);

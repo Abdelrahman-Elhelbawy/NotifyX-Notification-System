@@ -26,6 +26,21 @@ public static class DependencyInjection
         // Register SignalR services for real-time communication.
         services.AddSignalR();
 
+        // Define a CORS policy for the local notification test client.
+        // Allow requests from its development origin, including any headers and HTTP methods.
+        // redentials are enabled so browser-based SignalR clients can use authenticated connections.
+        services.AddCors(options =>
+        {
+            options.AddPolicy("NotificationTest", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
+
         return services;
     }
 

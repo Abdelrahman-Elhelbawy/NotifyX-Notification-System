@@ -6,6 +6,8 @@
 # dotenv files
 .env
 
+./NotifyX.Api/Hubs/QueryStringUserIdProvider.cs
+
 .vscode
 .github
 
@@ -488,3 +490,4 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+NotifyX.Api/Hubs/QueryStringUserIdProvider.cs

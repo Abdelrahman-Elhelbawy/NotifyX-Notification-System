@@ -15,7 +15,7 @@ public interface INotificationRepository
     /// <summary>
     /// Retrieves all notifications asynchronously.
     /// </summary>
-    Task GetAllAsync(
+    Task<List<Notification>> GetAllAsync(
         CancellationToken cancellationToken = default);
 
     /// <summary>
