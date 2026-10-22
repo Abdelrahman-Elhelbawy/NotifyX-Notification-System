@@ -28,4 +28,8 @@ public class Notification
     // Ref to NotificationRecipient Table
     public ICollection<NotificationRecipient> Recipients { get; set; }
     = new List<NotificationRecipient>();
+
+    // Ref to IdempotencyKey Table
+     public ICollection<IdempotencyKey> IdempotencyKeys { get; set; }
+        = new List<IdempotencyKey>();
 }

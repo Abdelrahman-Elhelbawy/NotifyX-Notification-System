@@ -23,6 +23,9 @@ public static class DependencyInjection
             .AddDatabaseConfiguration(configuration)
             .AddDefaultConfiguration();
 
+        // Register SignalR services for real-time communication.
+        services.AddSignalR();
+
         return services;
     }
 
@@ -31,8 +34,7 @@ public static class DependencyInjection
         -- This method configures the database context and adds it to the service collection.
         -- It retrieves the connection string from the configuration and uses it to configure the DbContext.
     */
-    private static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services,
-        IConfiguration configuration)
+    private static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -42,7 +44,8 @@ public static class DependencyInjection
     }
 
     /*
-        -- 
+        -- Add default configuration to the container.
+        -- This method registers the global exception handler and problem details services.
     */
     private static IServiceCollection AddDefaultConfiguration(this IServiceCollection services)
     {
@@ -54,8 +57,8 @@ public static class DependencyInjection
     }
 
     /*
-        -- Add Repositories Scoped
-        -- Add Services Scoped
+        -- Add scoped dependencies to the container.
+        -- This method registers repositories and services with a scoped lifetime.
     */
     private static IServiceCollection AddScopedConfiguration(this IServiceCollection services)
     {

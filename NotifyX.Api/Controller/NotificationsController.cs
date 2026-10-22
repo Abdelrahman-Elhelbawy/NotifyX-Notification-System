@@ -78,7 +78,7 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.UpdateAsync(id, request, cancellationToken);
-        return result.IsSuccess ? Ok("Updated Successfully") : result.ToProblem();
+        return result.IsSuccess ? NoContent() : result.ToProblem();
     }
 
     /// <summary>
@@ -93,6 +93,6 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.DeleteAsync(id, cancellationToken);
-        return result.IsSuccess ? Ok("Deleted Successfully") : result.ToProblem();
+        return result.IsSuccess ? NoContent() : result.ToProblem();
     }
 }

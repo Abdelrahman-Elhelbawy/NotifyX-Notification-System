@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using NotifyX.Api.Data.Configuration;
 using NotifyX.Api.Entities;
 
 namespace NotifyX.Api.Data;
@@ -9,6 +8,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<NotificationRecipient> NotificationRecipients { get; set; } = null!;
+    public DbSet<IdempotencyKey> IdempotencyKeys { get; set; } = null!;
 
     protected override void OnModelCreating(
     ModelBuilder modelBuilder)

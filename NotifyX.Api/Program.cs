@@ -1,4 +1,5 @@
 using NotifyX.Api;
+using NotifyX.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,4 +24,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notifications");
+
 app.Run();
