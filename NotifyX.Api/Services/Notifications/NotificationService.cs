@@ -7,6 +7,7 @@ using NotifyX.Api.Hubs;
 using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
+using OneOf;
 
 namespace NotifyX.Api.Services.Notifications;
 
@@ -33,7 +34,7 @@ public class NotificationService(
     /// <returns>
     /// A successful result containing the created notification, or a validation failure if the request is invalid.
     /// </returns>
-    public async Task<Result<NotificationResponse>> CreateAsync(CreateNotificationRequest request, CancellationToken cancellationToken = default!)
+    public async Task<OneOf<NotificationResponse , Error>> CreateAsync(CreateNotificationRequest request, CancellationToken cancellationToken = default!)
     {
         var validation = await _validator.ValidateAsync(
             request, cancellationToken);
@@ -44,8 +45,7 @@ public class NotificationService(
                 .Select(error => error.ErrorMessage)
                 .ToArray();
 
-            return Result<NotificationResponse>.Failure(
-                NotificationErrors.ValidationFailed);
+            return NotificationErrors.ValidationFailed ;
         }
 
         var notification = new Notification
@@ -84,7 +84,7 @@ public class NotificationService(
             request.UserIds,
             cancellationToken);
 
-        return Result<NotificationResponse>.Success(response);
+        return response;
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public class NotificationService(
     /// <returns>
     /// A successful result containing the list of notification payloads, or an empty list when no notifications exist.
     /// </returns>
-    public async Task<Result<List<NotificationResponse>>> GetAllAsync(CancellationToken cancellationToken = default!)
+    public async Task<OneOf<List<NotificationResponse>, Error>> GetAllAsync(CancellationToken cancellationToken = default!)
     {
         // TODO : Add Pagnation (skip)
         var result = await _repository.GetAllAsync(cancellationToken);
@@ -105,7 +105,7 @@ public class NotificationService(
             .Select(notification => BuildResponse(notification))
             .ToList();
 
-        return Result<List<NotificationResponse>>.Success(response);
+        return response;
     }
 
     /// <summary>
@@ -116,14 +116,13 @@ public class NotificationService(
     /// <returns>
     /// A successful result with the requested notification payload, or a not-found result when no matching notification exists.
     /// </returns>
-    public async Task<Result<NotificationResponse>> GetAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    public async Task<OneOf<NotificationResponse, Error>> GetAsync(Guid notificationId, CancellationToken cancellationToken = default)
     {
         var notification = await _repository.GetAsync(notificationId, cancellationToken);
         if (notification is null)
-            return Result<NotificationResponse>.Failure(
-                NotificationErrors.NotFound);
+            return NotificationErrors.NotFound;
 
-        return Result<NotificationResponse>.Success(BuildResponse(notification));
+        return BuildResponse(notification);
     }
 
     /// <summary>
@@ -137,17 +136,15 @@ public class NotificationService(
     /// <returns>
     /// A successful result with the updated notification payload, or a not-found result if the notification does not exist.
     /// </returns>
-    public async Task<Result<NotificationResponse>> UpdateAsync(Guid notificationId, UpdateNotificationRequest request, CancellationToken cancellationToken = default)
+    public async Task<OneOf<NotificationResponse, Error>> UpdateAsync(Guid notificationId, UpdateNotificationRequest request, CancellationToken cancellationToken = default)
     {
         var notification = await _repository.GetAsync(
             notificationId,
             cancellationToken);
 
         if (notification is null)
-        {
-            return Result<NotificationResponse>.Failure(
-                NotificationErrors.NotFound);
-        }
+            return NotificationErrors.NotFound;
+
 
         notification.Title = request.Title ?? notification.Title;
         notification.Body = request.Body ?? notification.Body;
@@ -162,7 +159,7 @@ public class NotificationService(
 
         await _repository.SaveChangesAsync(cancellationToken);
 
-        return Result<NotificationResponse>.Success(BuildResponse(notification));
+        return BuildResponse(notification);
     }
 
     /// <summary>
@@ -173,24 +170,22 @@ public class NotificationService(
     /// <returns>
     /// A successful result with the deleted notification payload, or a not-found result when the notification cannot be found.
     /// </returns>
-    public async Task<Result<NotificationResponse>> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    public async Task<OneOf<NotificationResponse , Error>> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
     {
         var notification = await _repository.GetAsync(
             notificationId,
             cancellationToken);
 
         if (notification is null || notification.IsDeleted)
-        {
-            return Result<NotificationResponse>.Failure(
-                NotificationErrors.NotFound);
-        }
+            return NotificationErrors.NotFound;
+    
 
         await _repository.DeleteAsync(
             notificationId,
             cancellationToken);
 
         await _repository.SaveChangesAsync(cancellationToken);
-        return Result<NotificationResponse>.Success(BuildResponse(notification));
+        return BuildResponse(notification);
     }
 
     /// <summary>

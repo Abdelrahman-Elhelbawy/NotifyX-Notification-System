@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using NotifyX.Api.Common.Results;
 using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Services.Notifications;
 
@@ -25,7 +24,15 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.CreateAsync(request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        
+        return result.Match<IActionResult>(
+            notificationResponse => Ok(notificationResponse),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
     }
 
     /// <summary>
@@ -36,12 +43,20 @@ public class NotificationsController(
     [HttpGet]
     [Route("")]
     public async Task<IActionResult> GetAll(
-        CancellationToken cancellationToken = default!)
+        CancellationToken cancellationToken = default)
     {
         var result = await _service.GetAllAsync(cancellationToken);
 
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.Match<IActionResult>(
+            notificationResponse => Ok(notificationResponse),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
     }
+
 
     /// <summary>
     /// Retrieves a notification by its unique identifier.
@@ -58,9 +73,14 @@ public class NotificationsController(
             id,
             cancellationToken);
 
-        return result.IsSuccess
-            ? Ok(result.Value)
-            : result.ToProblem();
+        return result.Match<IActionResult>(
+            notificationResponse => Ok(notificationResponse),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
     }
 
     /// <summary>
@@ -77,7 +97,15 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.UpdateAsync(id, request, cancellationToken);
-        return result.IsSuccess ? NoContent() : result.ToProblem();
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
     }
 
     /// <summary>
@@ -92,6 +120,14 @@ public class NotificationsController(
         CancellationToken cancellationToken = default!)
     {
         var result = await _service.DeleteAsync(id, cancellationToken);
-        return result.IsSuccess ? NoContent() : result.ToProblem();
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
     }
 }

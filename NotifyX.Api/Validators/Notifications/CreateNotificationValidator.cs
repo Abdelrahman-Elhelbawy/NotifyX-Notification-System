@@ -21,5 +21,9 @@ public sealed class CreateNotificationValidator
         RuleFor(x => x.Body)
             .NotEmpty()
             .WithMessage("Body is required.");
+
+        RuleFor(x => x.Type)
+            .NotEmpty()
+            .WithMessage("Type is required.");
     }
 }

@@ -1,6 +1,7 @@
 using NotifyX.Api.Common.Results;
 using NotifyX.Api.Entities;
 using NotifyX.Api.Models.Notifications;
+using OneOf;
 
 namespace NotifyX.Api.Services.Notifications;
 
@@ -9,27 +10,27 @@ public interface INotificationService
     /// <summary>
     /// Provides operations for creating, retrieving, updating, and deleting notifications.
     /// </summary>
-    Task<Result<NotificationResponse>> CreateAsync(
+    Task<OneOf<NotificationResponse , Error>> CreateAsync(
         CreateNotificationRequest request,
         CancellationToken cancellationToken = default!);
 
     /// <summary>
     /// Retrieves all notifications.
     /// </summary>
-    Task<Result<List<NotificationResponse>>> GetAllAsync(
+    Task<OneOf< List<NotificationResponse> , Error>> GetAllAsync(
         CancellationToken cancellationToken = default!);
 
     /// <summary>
     /// Retrieves a notification by its identifier.
     /// </summary>
-    Task<Result<NotificationResponse>> GetAsync(
+    Task<OneOf<NotificationResponse , Error>> GetAsync(
         Guid notificationId,
         CancellationToken cancellationToken = default!);
 
     /// <summary>
     /// Updates a notification.
     /// </summary>
-    Task<Result<NotificationResponse>> UpdateAsync(
+    Task<OneOf<NotificationResponse , Error>> UpdateAsync(
         Guid notificationId,
         UpdateNotificationRequest request,
         CancellationToken cancellationToken = default!);
@@ -37,7 +38,7 @@ public interface INotificationService
     /// <summary>
     /// Deletes a notification by its identifier.
     /// </summary>
-    Task<Result<NotificationResponse>> DeleteAsync(
+    Task<OneOf<NotificationResponse , Error>> DeleteAsync(
         Guid notificationId,
         CancellationToken cancellationToken = default!);
 }
