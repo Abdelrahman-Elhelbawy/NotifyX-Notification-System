@@ -33,4 +33,10 @@ public static class NotificationErrors
             "Notification.AtLeastOne",
             "At least one valid recipient is required.",
             StatusCodes.Status400BadRequest);
+
+    public static readonly Error ValidationFailed =
+    new(
+        "Notification.ValidationFailed",
+        "One or more validation errors occurred.",
+        StatusCodes.Status400BadRequest);
 }

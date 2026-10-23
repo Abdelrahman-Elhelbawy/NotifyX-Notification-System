@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.Common.Exceptions;
 using NotifyX.Api.Data;
-
+using NotifyX.Api.Models.Notifications;
+using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
 using NotifyX.Api.Repository.Notifcations;
 using NotifyX.Api.Services.Notifications;
@@ -31,10 +33,10 @@ public static class DependencyInjection
         // redentials are enabled so browser-based SignalR clients can use authenticated connections.
         services.AddCors(options =>
         {
-            options.AddPolicy("NotificationTest", policy =>
+            options.AddPolicy("NotifyXPolicy", policy =>
             {
                 policy
-                    .AllowAnyOrigin()
+                    .SetIsOriginAllowed(_ => true)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -53,8 +55,24 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
-
+            options.UseSqlServer(
+                connectionString,
+                /*
+                 * Configure SQL Server's transient-failure retry strategy.
+                 * Retry failed database operations up to five times, waiting up to
+                 * ten seconds between attempts. No additional SQL error numbers
+                 * are specified; the provider uses its default transient-error list.
+                 */
+                sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null
+                    );
+                }
+            )
+        );
         return services;
     }
 
@@ -77,16 +95,25 @@ public static class DependencyInjection
     */
     private static IServiceCollection AddScopedConfiguration(this IServiceCollection services)
     {
-        // Register Repositories
+        // Repositories
         services.AddScoped<
             INotificationRepository,
             NotificationRepository>();
 
-        // Register Services
+        // Services
         services.AddScoped<
             INotificationService,
             NotificationService>();
 
+        // Validation
+        services.AddScoped<
+            IValidator<CreateNotificationRequest>,
+            CreateNotificationValidator>();
+
+        // Publisher
+        services.AddScoped<
+            INotificationPublisher,
+            SignalRNotificationPublisher>();
         return services;
     }
 }
