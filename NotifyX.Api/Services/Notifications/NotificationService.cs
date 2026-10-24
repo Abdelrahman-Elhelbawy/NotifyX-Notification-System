@@ -1,29 +1,35 @@
-using FluentValidation;
-using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.Common.Errors;
 using NotifyX.Api.Common.Results;
+using NotifyX.Api.Data;
 using NotifyX.Api.Entities;
-using NotifyX.Api.Hubs;
+using NotifyX.Api.Entities.Enums;
+using NotifyX.Api.Factories;
 using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
+using NotifyX.Api.Repository.IdempotencyKeys;
+using NotifyX.Api.Services.Idempotency;
 using OneOf;
 
 namespace NotifyX.Api.Services.Notifications;
 
 public class NotificationService(
     INotificationRepository repository,
-    IHubContext<NotificationHub> hubContext,
-    ILogger<NotificationService> logger,
-    IValidator<CreateNotificationRequest> validator,
+    IIdempotencyKeysRepository idempotencyKeys,
+    IIdempotencyService idempotencyService,
+    NotificationFactory notificationFactory,
+    ApplicationDbContext context,
     INotificationPublisher publisher
     ) : INotificationService
 {
     private readonly INotificationRepository _repository = repository;
-    private readonly IHubContext<NotificationHub> _hubContext = hubContext;
-    private readonly ILogger<NotificationService> _logger = logger;
-    public IValidator<CreateNotificationRequest> _validator = validator;
-    public INotificationPublisher _publisher = publisher;
+    public readonly INotificationPublisher _publisher = publisher;
+    public readonly IIdempotencyKeysRepository _idempotencyKeys = idempotencyKeys;
+    public readonly ApplicationDbContext _context = context;
+    public IIdempotencyService _idempotencyService = idempotencyService;
+
+    public NotificationFactory _notificationFactory= notificationFactory;
 
 
     /// <summary>
@@ -34,57 +40,110 @@ public class NotificationService(
     /// <returns>
     /// A successful result containing the created notification, or a validation failure if the request is invalid.
     /// </returns>
-    public async Task<OneOf<NotificationResponse , Error>> CreateAsync(CreateNotificationRequest request, CancellationToken cancellationToken = default!)
+    /// <summary>
+    /// Validates and creates a notification, persists it with its recipients,
+    /// and publishes it to the requested users.
+    /// </summary>
+    public async Task<OneOf<NotificationResponse, Error>> CreateAsync(CreateNotificationRequest request, string idempotencyKey, CancellationToken cancellationToken = default)
     {
-        var validation = await _validator.ValidateAsync(
-            request, cancellationToken);
-
-        if (!validation.IsValid)
+        if (string.IsNullOrWhiteSpace(idempotencyKey) ||
+        idempotencyKey.Length > 200)
         {
-            var errors = validation.Errors
-                .Select(error => error.ErrorMessage)
-                .ToArray();
-
-            return NotificationErrors.ValidationFailed ;
+            return NotificationErrors.InvalidIdempotencyKey;
         }
 
-        var notification = new Notification
-        {
-            Id = Guid.NewGuid(),
-            Title = request.Title,
-            Body = request.Body,
-            Type = request.Type,
-            Priority = request.Priority,
-            CreatedAt = DateTimeOffset.UtcNow,
-            Metadata = request.Metadata
-        };
+        var userId = Guid.Parse(
+            "11111111-1111-1111-1111-111111111111");
 
-        foreach (var userId in request.UserIds)
+        var requestHash = IdempotencyHash.Compute(request);
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        Notification? createdNotification = null;
+
+        var result = await strategy.ExecuteAsync(async () =>
         {
-            notification.Recipients.Add(new NotificationRecipient
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable,
+                    cancellationToken);
+
+            var existingKey = await _idempotencyService.GetExistingAsync(
+                userId,
+                idempotencyKey,
+                cancellationToken);
+
+            if (existingKey is not null)
             {
-                NotificationId = notification.Id,
-                UserId = userId,
-                IsRead = false,
-                ReadAtUtc = null
-            });
+                await transaction.RollbackAsync(cancellationToken);
+
+                if (!string.Equals(
+                        existingKey.RequestHash,
+                        requestHash,
+                        StringComparison.Ordinal))
+                {
+                    return (NotificationResponse?)null;
+                }
+
+                if (existingKey.Status == IdempotencyStatus.Completed &&
+                    existingKey.Notification is not null)
+                {
+                    return BuildResponse(existingKey.Notification);
+                }
+
+                return (NotificationResponse?)null;
+            }
+
+            var notification = _notificationFactory.Create(request);
+
+            var idempotencyRecord = _idempotencyService.CreateRecord(
+                userId,
+                idempotencyKey,
+                requestHash,
+                notification.Id);
+
+            await _repository.AddAsync(notification, cancellationToken);
+
+            await _context.IdempotencyKeys.AddAsync(
+                idempotencyRecord,
+                cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            createdNotification = notification;
+
+            return BuildResponse(notification);
+        });
+
+        if (result is null)
+        {
+            var existingKey = await _idempotencyService.GetExistingAsync(
+                userId,
+                idempotencyKey,
+                cancellationToken);
+
+            if (existingKey is not null &&
+                !string.Equals(
+                    existingKey.RequestHash,
+                    requestHash,
+                    StringComparison.Ordinal))
+            {
+                return NotificationErrors.IdempotencyKeyConflict;
+            }
+
+            return NotificationErrors.IdempotencyRequestInProgress;
         }
 
-        await _repository.AddAsync(
-            notification,
-            cancellationToken);
+        if (createdNotification is not null)
+        {
+            await _publisher.PublishAsync(
+                result,
+                createdNotification,
+                request.UserIds,
+                cancellationToken);
+        }
 
-        await _repository.SaveChangesAsync(cancellationToken);
-
-        var response = BuildResponse(notification);
-
-        await _publisher.PublishAsync(
-            response,
-            notification,
-            request.UserIds,
-            cancellationToken);
-
-        return response;
+        return result;
     }
 
     /// <summary>
@@ -170,7 +229,7 @@ public class NotificationService(
     /// <returns>
     /// A successful result with the deleted notification payload, or a not-found result when the notification cannot be found.
     /// </returns>
-    public async Task<OneOf<NotificationResponse , Error>> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    public async Task<OneOf<NotificationResponse, Error>> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
     {
         var notification = await _repository.GetAsync(
             notificationId,
@@ -178,7 +237,7 @@ public class NotificationService(
 
         if (notification is null || notification.IsDeleted)
             return NotificationErrors.NotFound;
-    
+
 
         await _repository.DeleteAsync(
             notificationId,

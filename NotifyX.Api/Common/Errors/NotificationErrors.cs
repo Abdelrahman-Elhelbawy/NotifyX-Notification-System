@@ -34,9 +34,21 @@ public static class NotificationErrors
             "At least one valid recipient is required.",
             StatusCodes.Status400BadRequest);
 
-    public static readonly Error ValidationFailed =
-    new(
-        "Notification.ValidationFailed",
-        "One or more validation errors occurred.",
-        StatusCodes.Status400BadRequest);
+    public static readonly Error InvalidIdempotencyKey =
+        new(
+            "Notification.InvalidIdempotencyKey",
+            "The Idempotency-Key header is required and must not exceed 200 characters.",
+            StatusCodes.Status400BadRequest);
+
+    public static readonly Error IdempotencyKeyConflict =
+        new(
+        "Notification.IdempotencyKeyConflict",
+        "The Idempotency-Key was already used with a different request.",
+        StatusCodes.Status409Conflict);
+
+    public static readonly Error IdempotencyRequestInProgress =
+        new(
+            "Notification.IdempotencyRequestInProgress",
+            "A request with this Idempotency-Key is already in progress.",
+            StatusCodes.Status409Conflict);
 }

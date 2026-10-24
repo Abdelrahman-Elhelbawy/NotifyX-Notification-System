@@ -1,11 +1,16 @@
+using System.Reflection;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.Common.Exceptions;
 using NotifyX.Api.Data;
-using NotifyX.Api.Models.Notifications;
+using NotifyX.Api.Factories;
 using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
+using NotifyX.Api.Repository.IdempotencyKeys;
+using NotifyX.Api.Repository.IdempotencyKeysRepository;
 using NotifyX.Api.Repository.Notifcations;
+using NotifyX.Api.Services.Idempotency;
 using NotifyX.Api.Services.Notifications;
 
 namespace NotifyX.Api;
@@ -23,7 +28,8 @@ public static class DependencyInjection
         services
             .AddScopedConfiguration()
             .AddDatabaseConfiguration(configuration)
-            .AddDefaultConfiguration();
+            .AddDefaultConfiguration()
+            .AddFluentValidationConfig();
 
         // Register SignalR services for real-time communication.
         services.AddSignalR();
@@ -89,6 +95,23 @@ public static class DependencyInjection
         return services;
     }
 
+
+    /*
+        -- Add FluentValidation dependencies to the container.
+        -- This method configures automatic model validation and registers all validators
+        -- from the executing assembly so request DTOs are validated consistently.
+    */
+    private static IServiceCollection AddFluentValidationConfig(
+        this IServiceCollection services)
+    {
+        services
+            .AddFluentValidationAutoValidation()
+            .AddValidatorsFromAssembly(
+                Assembly.GetExecutingAssembly());
+
+        return services;
+    }
+
     /*
         -- Add scoped dependencies to the container.
         -- This method registers repositories and services with a scoped lifetime.
@@ -100,15 +123,20 @@ public static class DependencyInjection
             INotificationRepository,
             NotificationRepository>();
 
+        services.AddScoped<
+            IIdempotencyKeysRepository,
+            IdempotencyKeysRepository>();
+
         // Services
         services.AddScoped<
             INotificationService,
             NotificationService>();
 
-        // Validation
         services.AddScoped<
-            IValidator<CreateNotificationRequest>,
-            CreateNotificationValidator>();
+            IIdempotencyService, 
+            IdempotencyService>();
+            
+        services.AddScoped<NotificationFactory>();
 
         // Publisher
         services.AddScoped<

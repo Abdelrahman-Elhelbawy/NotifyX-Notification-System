@@ -21,10 +21,11 @@ public class NotificationsController(
     [Route("")]
     public async Task<IActionResult> Create(
         [FromBody] CreateNotificationRequest request,
+        [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
         CancellationToken cancellationToken = default!)
     {
-        var result = await _service.CreateAsync(request, cancellationToken);
-        
+        var result = await _service.CreateAsync(request, idempotencyKey, cancellationToken);
+
         return result.Match<IActionResult>(
             notificationResponse => Ok(notificationResponse),
             error => Problem(

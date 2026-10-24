@@ -12,6 +12,7 @@ public interface INotificationService
     /// </summary>
     Task<OneOf<NotificationResponse , Error>> CreateAsync(
         CreateNotificationRequest request,
+        string idempotencyKey,
         CancellationToken cancellationToken = default!);
 
     /// <summary>
