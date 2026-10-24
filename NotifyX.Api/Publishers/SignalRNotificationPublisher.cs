@@ -18,7 +18,6 @@ public sealed class SignalRNotificationPublisher
         _hubContext = hubContext;
         _logger = logger;
     }
-
     public async Task PublishAsync(
         NotificationResponse response,
         Notification notification,

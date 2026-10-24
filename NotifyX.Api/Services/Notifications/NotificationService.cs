@@ -1,3 +1,5 @@
+using System.Data;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.Common.Errors;
 using NotifyX.Api.Common.Results;
@@ -10,6 +12,7 @@ using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
 using NotifyX.Api.Repository.IdempotencyKeys;
 using NotifyX.Api.Services.Idempotency;
+using NotifyX.Api.Services.Outbox;
 using OneOf;
 
 namespace NotifyX.Api.Services.Notifications;
@@ -18,6 +21,7 @@ public class NotificationService(
     INotificationRepository repository,
     IIdempotencyKeysRepository idempotencyKeys,
     IIdempotencyService idempotencyService,
+    IOutboxService outboxService,
     NotificationFactory notificationFactory,
     ApplicationDbContext context,
     INotificationPublisher publisher
@@ -29,7 +33,9 @@ public class NotificationService(
     public readonly ApplicationDbContext _context = context;
     public IIdempotencyService _idempotencyService = idempotencyService;
 
-    public NotificationFactory _notificationFactory= notificationFactory;
+    public NotificationFactory _notificationFactory = notificationFactory;
+
+    public IOutboxService _outboxService = outboxService;
 
 
     /// <summary>
@@ -47,7 +53,7 @@ public class NotificationService(
     public async Task<OneOf<NotificationResponse, Error>> CreateAsync(CreateNotificationRequest request, string idempotencyKey, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(idempotencyKey) ||
-        idempotencyKey.Length > 200)
+            idempotencyKey.Length > 200)
         {
             return NotificationErrors.InvalidIdempotencyKey;
         }
@@ -58,19 +64,18 @@ public class NotificationService(
         var requestHash = IdempotencyHash.Compute(request);
         var strategy = _context.Database.CreateExecutionStrategy();
 
-        Notification? createdNotification = null;
-
         var result = await strategy.ExecuteAsync(async () =>
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(
-                    System.Data.IsolationLevel.Serializable,
+                    IsolationLevel.Serializable,
                     cancellationToken);
 
-            var existingKey = await _idempotencyService.GetExistingAsync(
-                userId,
-                idempotencyKey,
-                cancellationToken);
+            var existingKey =
+                await _idempotencyService.GetExistingAsync(
+                    userId,
+                    idempotencyKey,
+                    cancellationToken);
 
             if (existingKey is not null)
             {
@@ -95,32 +100,47 @@ public class NotificationService(
 
             var notification = _notificationFactory.Create(request);
 
-            var idempotencyRecord = _idempotencyService.CreateRecord(
-                userId,
-                idempotencyKey,
-                requestHash,
-                notification.Id);
+            var idempotencyRecord =
+                _idempotencyService.CreateRecord(
+                    userId,
+                    idempotencyKey,
+                    requestHash,
+                    notification.Id);
 
-            await _repository.AddAsync(notification, cancellationToken);
+            var payload = new NotificationCreatedPayload(
+                notification.Id,
+                request.UserIds.Distinct().ToArray());
+
+            var outboxMessage = _outboxService.CreateRecord(
+                "NotificationCreated",
+                JsonSerializer.Serialize(payload));
+
+            await _repository.AddAsync(
+                notification,
+                cancellationToken);
 
             await _context.IdempotencyKeys.AddAsync(
                 idempotencyRecord,
                 cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            await _context.OutboxMessages.AddAsync(
+                outboxMessage,
+                cancellationToken);
 
-            createdNotification = notification;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
 
             return BuildResponse(notification);
         });
 
         if (result is null)
         {
-            var existingKey = await _idempotencyService.GetExistingAsync(
-                userId,
-                idempotencyKey,
-                cancellationToken);
+            var existingKey =
+                await _idempotencyService.GetExistingAsync(
+                    userId,
+                    idempotencyKey,
+                    cancellationToken);
 
             if (existingKey is not null &&
                 !string.Equals(
@@ -130,21 +150,11 @@ public class NotificationService(
             {
                 return NotificationErrors.IdempotencyKeyConflict;
             }
-
             return NotificationErrors.IdempotencyRequestInProgress;
         }
-
-        if (createdNotification is not null)
-        {
-            await _publisher.PublishAsync(
-                result,
-                createdNotification,
-                request.UserIds,
-                cancellationToken);
-        }
-
         return result;
     }
+
 
     /// <summary>
     /// Retrieves all notifications currently available in the repository for the API consumers.

@@ -8,10 +8,16 @@ namespace NotifyX.Api.Services.Idempotency;
 public sealed class IdempotencyService(
     ApplicationDbContext context) : IIdempotencyService
 {
-    public async Task<IdempotencyKey?> GetExistingAsync(
-        Guid userId,
-        string key,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Retrieves an existing idempotency record for the specified user and request key.
+    /// </summary>
+    /// <param name="userId">The identifier of the user associated with the request.</param>
+    /// <param name="key">The idempotency key used to identify the request.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the operation to complete.</param>
+    /// <returns>
+    /// The existing idempotency record if one matches; otherwise, <see langword="null"/>.
+    /// </returns>
+    public async Task<IdempotencyKey?> GetExistingAsync(Guid userId, string key, CancellationToken cancellationToken = default)
     {
         return await context.IdempotencyKeys
             .AsNoTracking()
@@ -21,11 +27,16 @@ public sealed class IdempotencyService(
                 cancellationToken);
     }
 
-    public IdempotencyKey CreateRecord(
-        Guid userId,
-        string key,
-        string requestHash,
-        Guid notificationId)
+    
+    /// <summary>
+    /// Creates a new idempotency record for a request that has been accepted for processing.
+    /// </summary>
+    /// <param name="userId">The identifier of the user associated with the request.</param>
+    /// <param name="key">The idempotency key used to identify the request.</param>
+    /// <param name="requestHash">A hash of the request payload used to detect duplicates.</param>
+    /// <param name="notificationId">The identifier of the notification associated with the request.</param>
+    /// <returns>A newly created idempotency record.</returns>
+    public IdempotencyKey CreateRecord(Guid userId, string key, string requestHash, Guid notificationId)
     {
         return new IdempotencyKey
         {

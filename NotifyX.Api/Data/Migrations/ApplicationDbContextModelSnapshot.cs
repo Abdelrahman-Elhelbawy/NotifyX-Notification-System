@@ -16,7 +16,7 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261022192927_FixIdempotencyNotificationRelation";
+    public override string LastMigrationId => "20261024134731_AddOutboxMessages";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -135,6 +135,47 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                     {
                         t.HasCheckConstraint("CK_Notifications_ReadState", "([IsRead] = 0 AND [ReadAtUtc] IS NULL) OR ([IsRead] = 1 AND [ReadAtUtc] IS NOT NULL)");
                     });
+            });
+
+        modelBuilder.Entity("NotifyX.Api.Entities.OutboxMessage", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<int>("Attempts")
+                    .HasColumnType("int");
+
+                b.Property<DateTimeOffset>("CreatedAtUtc")
+                    .HasColumnType("datetimeoffset");
+
+                b.Property<DateTimeOffset?>("DeadLetteredAtUtc")
+                    .HasColumnType("datetimeoffset");
+
+                b.Property<string>("EventType")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("nvarchar(200)");
+
+                b.Property<string>("LastError")
+                    .HasMaxLength(4000)
+                    .HasColumnType("nvarchar(4000)");
+
+                b.Property<DateTimeOffset?>("NextAttemptAtUtc")
+                    .HasColumnType("datetimeoffset");
+
+                b.Property<string>("Payload")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
+
+                b.Property<DateTimeOffset?>("ProcessedAtUtc")
+                    .HasColumnType("datetimeoffset");
+
+                b.HasKey("Id");
+
+                b.HasIndex("ProcessedAtUtc", "DeadLetteredAtUtc", "NextAttemptAtUtc");
+
+                b.ToTable("OutboxMessages");
             });
 
         modelBuilder.Entity("NotifyX.Api.Entities.IdempotencyKey", b =>

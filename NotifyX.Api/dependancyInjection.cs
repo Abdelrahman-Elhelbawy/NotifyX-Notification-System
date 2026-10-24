@@ -2,6 +2,7 @@ using System.Reflection;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using NotifyX.Api.BackgroundServices;
 using NotifyX.Api.Common.Exceptions;
 using NotifyX.Api.Data;
 using NotifyX.Api.Factories;
@@ -12,6 +13,7 @@ using NotifyX.Api.Repository.IdempotencyKeysRepository;
 using NotifyX.Api.Repository.Notifcations;
 using NotifyX.Api.Services.Idempotency;
 using NotifyX.Api.Services.Notifications;
+using NotifyX.Api.Services.Outbox;
 
 namespace NotifyX.Api;
 
@@ -30,6 +32,8 @@ public static class DependencyInjection
             .AddDatabaseConfiguration(configuration)
             .AddDefaultConfiguration()
             .AddFluentValidationConfig();
+
+        services.AddHostedService<OutboxBackgroundService>();
 
         // Register SignalR services for real-time communication.
         services.AddSignalR();
@@ -133,9 +137,13 @@ public static class DependencyInjection
             NotificationService>();
 
         services.AddScoped<
-            IIdempotencyService, 
+            IIdempotencyService,
             IdempotencyService>();
-            
+
+        services.AddScoped<
+            IOutboxService, 
+            OutboxService>();
+
         services.AddScoped<NotificationFactory>();
 
         // Publisher
