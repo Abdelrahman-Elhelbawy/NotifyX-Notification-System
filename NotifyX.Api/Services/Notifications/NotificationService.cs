@@ -32,9 +32,7 @@ public class NotificationService(
     public readonly IIdempotencyKeysRepository _idempotencyKeys = idempotencyKeys;
     public readonly ApplicationDbContext _context = context;
     public IIdempotencyService _idempotencyService = idempotencyService;
-
     public NotificationFactory _notificationFactory = notificationFactory;
-
     public IOutboxService _outboxService = outboxService;
 
 
@@ -68,7 +66,7 @@ public class NotificationService(
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(
-                    IsolationLevel.Serializable,
+                    IsolationLevel.ReadCommitted,
                     cancellationToken);
 
             var existingKey =
@@ -155,7 +153,6 @@ public class NotificationService(
         return result;
     }
 
-
     /// <summary>
     /// Retrieves all notifications currently available in the repository for the API consumers.
     /// </summary>
@@ -177,6 +174,7 @@ public class NotificationService(
         return response;
     }
 
+
     /// <summary>
     /// Fetches a single notification by its unique identifier.
     /// </summary>
@@ -193,6 +191,7 @@ public class NotificationService(
 
         return BuildResponse(notification);
     }
+
 
     /// <summary>
     /// Updates the editable properties of an existing notification without altering its identity.
@@ -231,6 +230,7 @@ public class NotificationService(
         return BuildResponse(notification);
     }
 
+
     /// <summary>
     /// Marks a notification as deleted by removing it from the active collection through the repository layer.
     /// </summary>
@@ -256,6 +256,7 @@ public class NotificationService(
         await _repository.SaveChangesAsync(cancellationToken);
         return BuildResponse(notification);
     }
+
 
     /// <summary>
     /// Maps a domain notification entity to the API response model used by clients.

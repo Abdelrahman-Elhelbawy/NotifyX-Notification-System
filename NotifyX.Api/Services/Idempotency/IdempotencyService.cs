@@ -8,6 +8,8 @@ namespace NotifyX.Api.Services.Idempotency;
 public sealed class IdempotencyService(
     ApplicationDbContext context) : IIdempotencyService
 {
+    private readonly ApplicationDbContext _context = context;
+
     /// <summary>
     /// Retrieves an existing idempotency record for the specified user and request key.
     /// </summary>
@@ -19,9 +21,9 @@ public sealed class IdempotencyService(
     /// </returns>
     public async Task<IdempotencyKey?> GetExistingAsync(Guid userId, string key, CancellationToken cancellationToken = default)
     {
-        return await context.IdempotencyKeys
+        return await _context.IdempotencyKeys
             .AsNoTracking()
-            .Include(x => x.Notification)
+            // .Include(x => x.Notification)
             .FirstOrDefaultAsync(
                 x => x.UserId == userId && x.Key == key,
                 cancellationToken);
