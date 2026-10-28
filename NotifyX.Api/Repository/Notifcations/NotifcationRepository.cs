@@ -13,9 +13,7 @@ public class NotificationRepository(
     private readonly ApplicationDbContext _context = context;
 
     /// Creates a notification asynchronously.
-    public async Task AddAsync(
-    Notification notification,
-    CancellationToken cancellationToken = default)
+    public async Task AddAsync(Notification notification, CancellationToken cancellationToken = default)
     {
         await _context.Notifications.AddAsync(
             notification,
@@ -23,8 +21,7 @@ public class NotificationRepository(
     }
 
     /// Retrieves all notifications asynchronously.
-    public async Task<List<Notification>> GetAllAsync(
-        CancellationToken cancellationToken = default!)
+    public async Task<List<Notification>> GetAllAsync(CancellationToken cancellationToken = default!)
     {
         return await _context.Notifications
             .AsNoTracking()
@@ -32,9 +29,7 @@ public class NotificationRepository(
     }
 
     /// Retrieves a notification by its identifier asynchronously.
-    public async Task<Notification?> GetAsync(
-     Guid notificationId,
-     CancellationToken cancellationToken = default!)
+    public async Task<Notification?> GetAsync(Guid notificationId, CancellationToken cancellationToken = default!)
     {
         return await _context.Notifications
             .AsNoTracking()
@@ -44,10 +39,7 @@ public class NotificationRepository(
     }
 
     /// Updates an existing notification asynchronously.
-    public async Task<bool> UpdateAsync(
-        Guid notificationId,
-        Notification notification,
-        CancellationToken cancellationToken = default!)
+    public async Task<bool> UpdateAsync(Guid notificationId, Notification notification, CancellationToken cancellationToken = default!)
     {
         var existingNotification = await _context.Notifications
             .FirstOrDefaultAsync(
@@ -65,10 +57,9 @@ public class NotificationRepository(
         existingNotification.Metadata = notification.Metadata;
         return true;
     }
+    
     /// Deletes a notification by its identifier asynchronously.
-    public async Task<bool> DeleteAsync(
-    Guid notificationId,
-    CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
     {
         var existingNotification = await _context.Notifications
             .FirstOrDefaultAsync(

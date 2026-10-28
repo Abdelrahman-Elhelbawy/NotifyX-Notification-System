@@ -266,6 +266,7 @@ public class NotificationService(
     private static NotificationResponse BuildResponse(Notification notification)
     {
         return new NotificationResponse(
+            notification.Id,
             notification.Title,
             notification.Body,
             notification.Type,

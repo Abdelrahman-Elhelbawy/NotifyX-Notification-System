@@ -1,5 +1,4 @@
 using NotifyX.Api.Common.Results;
-using NotifyX.Api.Entities;
 using NotifyX.Api.Models.Notifications;
 using OneOf;
 

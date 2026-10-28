@@ -160,6 +160,7 @@ public sealed class OutboxBackgroundService(
                 $"Notification {payload.NotificationId} was not found.");
 
         var response = new NotificationResponse(
+            notification.Id,
             notification.Title,
             notification.Body,
             notification.Type,

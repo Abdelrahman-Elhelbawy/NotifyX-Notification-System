@@ -11,7 +11,9 @@ using NotifyX.Api.Repositories.Notifications;
 using NotifyX.Api.Repository.IdempotencyKeys;
 using NotifyX.Api.Repository.IdempotencyKeysRepository;
 using NotifyX.Api.Repository.Notifcations;
+using NotifyX.Api.Repository.NotificationRecipients;
 using NotifyX.Api.Services.Idempotency;
+using NotifyX.Api.Services.NotificationRecipients;
 using NotifyX.Api.Services.Notifications;
 using NotifyX.Api.Services.Outbox;
 
@@ -131,6 +133,10 @@ public static class DependencyInjection
             IIdempotencyKeysRepository,
             IdempotencyKeysRepository>();
 
+        services.AddScoped<
+            INotificationRecipientRepository,
+            NotificationRecipientRepository>();
+
         // Services
         services.AddScoped<
             INotificationService,
@@ -143,6 +149,10 @@ public static class DependencyInjection
         services.AddScoped<
             IOutboxService, 
             OutboxService>();
+
+        services.AddScoped<
+            INotificationRecipientService, 
+            NotificationRecipientService>();
 
         services.AddScoped<NotificationFactory>();
 
