@@ -81,11 +81,28 @@ public class NotificationRecipientRepository(ApplicationDbContext context) : INo
             .CountAsync(n =>
                 n.NotificationId == notificationId &&
                 n.UserId == userId &&
-                n.IsRead == false &&
+                !n.IsRead &&
                 n.ReadAtUtc == null,
                 cancellationToken);
     }
 
+    /// <summary>
+    /// Marks all unread recipients of a specific notification as read for the specified user.
+    /// </summary>
+    public async Task<bool> ReadAllAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _context.NotificationRecipients
+            .Where(n =>
+                n.UserId == userId &&
+                !n.IsRead)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(n => n.IsRead, true)
+                    .SetProperty(n => n.ReadAtUtc, DateTime.UtcNow),
+                cancellationToken);
+
+        return affectedRows > 0;
+    }
 
     /// <summary>
     /// Saves pending notification recipient changes asynchronously.

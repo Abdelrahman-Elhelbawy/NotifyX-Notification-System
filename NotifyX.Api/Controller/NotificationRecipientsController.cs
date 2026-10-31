@@ -100,4 +100,31 @@ public class NotificationRecipientsController(
         );
     }
 
+    /// <summary>
+    /// Marks a notification as unread for the specified user.
+    /// </summary>
+    /// <param name="notificationId">The ID of the notification to mark as unread.</param>
+    /// <param name="request">The request containing the user ID.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the request.</param>
+    /// <returns>An HTTP 204 response if successful, or a problem response if the operation fails.</returns>
+    [HttpPut]
+    [Route("{userId}/read-all")]
+    [ApiVersion(1.0)]
+    public async Task<IActionResult> ReadAllAsync(
+        [FromRoute] string userId ,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var result = await _service.ReadAllAsync(userId, cancellationToken);
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => Problem(
+                statusCode: error.StatusCode,
+                title: error.Code,
+                detail: error.Description
+            )
+        );
+    }
+
 }

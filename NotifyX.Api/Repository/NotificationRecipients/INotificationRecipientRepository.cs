@@ -41,6 +41,14 @@ public interface INotificationRecipientRepository
     );
 
     /// <summary>
+    /// Update all IsRead to True for a notification recipient asynchronously.
+    /// </summary>
+    Task<bool> ReadAllAsync(
+        string userId,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Saves pending notification changes asynchronously.
     /// </summary>
     Task SaveChangesAsync(
