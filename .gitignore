@@ -5,11 +5,13 @@
 
 # dotenv files
 .env
+.env.*
+!.env.example
 
-./NotifyX.Api/Hubs/QueryStringUserIdProvider.cs
-
-.vscode
-.github
+# Local configuration overrides and secrets
+appsettings.*.local.json
+appsettings.local.json
+secrets.json
 
 # User-specific files
 *.rsuser
@@ -490,4 +492,3 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-NotifyX.Api/Hubs/QueryStringUserIdProvider.cs

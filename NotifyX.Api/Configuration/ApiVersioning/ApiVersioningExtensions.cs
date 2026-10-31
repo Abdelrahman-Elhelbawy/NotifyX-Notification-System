@@ -10,7 +10,7 @@ public static class ApiVersioningExtensions
     public static IServiceCollection AddApiVersioningConfiguration(
         this IServiceCollection services)
     {
-        services
+        _ = services
             .AddApiVersioning(options =>
             {
                 // Set the default API version.
