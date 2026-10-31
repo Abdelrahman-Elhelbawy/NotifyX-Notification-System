@@ -1,6 +1,7 @@
 using System.Data;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using NotifyX.Api.Common.Errors;
 using NotifyX.Api.Common.Results;
 using NotifyX.Api.Data;
@@ -12,6 +13,7 @@ using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
 using NotifyX.Api.Repository.IdempotencyKeys;
+using NotifyX.Api.Services.Cache;
 using NotifyX.Api.Services.Idempotency;
 using NotifyX.Api.Services.Outbox;
 using OneOf;
@@ -25,7 +27,9 @@ public class NotificationService(
     IOutboxService outboxService,
     NotificationFactory notificationFactory,
     ApplicationDbContext context,
-    INotificationPublisher publisher
+    INotificationPublisher publisher,
+    IDistributedCache cache,
+    INotificationCacheService notificationCacheService
     ) : INotificationService
 {
     private readonly INotificationRepository _repository = repository;
@@ -35,6 +39,8 @@ public class NotificationService(
     public IIdempotencyService _idempotencyService = idempotencyService;
     public NotificationFactory _notificationFactory = notificationFactory;
     public IOutboxService _outboxService = outboxService;
+    public IDistributedCache _cache = cache;
+    public INotificationCacheService _notificationCacheService = notificationCacheService;
 
 
     /// <summary>
@@ -151,6 +157,7 @@ public class NotificationService(
             }
             return NotificationErrors.IdempotencyRequestInProgress;
         }
+        await _notificationCacheService.InvalidateAsync(cancellationToken);
         return result;
     }
 
@@ -171,6 +178,25 @@ public class NotificationService(
         if (request.PageNumber < 1 || request.PageSize < 1 || request.PageSize > 100)
             return NotificationErrors.InvalidPaginationParameters;
 
+        var version = await _notificationCacheService.GetVersionAsync(cancellationToken);
+
+        var cacheKey =
+            $"notifications:all:{version}:page:{request.PageNumber}:size:{request.PageSize}";
+
+        var cachedData = await _cache.GetStringAsync(
+            cacheKey,
+            cancellationToken
+        );
+
+        if (cachedData is not null)
+        {
+            var cachedResponse =
+                JsonSerializer.Deserialize<PagedResult<NotificationResponse>>(cachedData);
+
+            if (cachedResponse is not null)
+                return cachedResponse;
+        }
+
         var result = await _repository.GetAllAsync(
             request,
             cancellationToken
@@ -185,6 +211,18 @@ public class NotificationService(
             result.PageNumber,
             result.PageSize,
             result.TotalCount
+        );
+
+        var serializedData = JsonSerializer.Serialize(pagedResponse);
+
+        await _cache.SetStringAsync(
+            cacheKey,
+            serializedData,
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            },
+            cancellationToken
         );
 
         return pagedResponse;
@@ -243,6 +281,7 @@ public class NotificationService(
 
         await _repository.SaveChangesAsync(cancellationToken);
 
+        await _notificationCacheService.InvalidateAsync(cancellationToken);
         return BuildResponse(notification);
     }
 
@@ -270,6 +309,9 @@ public class NotificationService(
             cancellationToken);
 
         await _repository.SaveChangesAsync(cancellationToken);
+
+        await _notificationCacheService.InvalidateAsync(cancellationToken);
+        
         return BuildResponse(notification);
     }
 

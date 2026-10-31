@@ -14,6 +14,7 @@ using NotifyX.Api.Repository.IdempotencyKeys;
 using NotifyX.Api.Repository.IdempotencyKeysRepository;
 using NotifyX.Api.Repository.Notifcations;
 using NotifyX.Api.Repository.NotificationRecipients;
+using NotifyX.Api.Services.Cache;
 using NotifyX.Api.Services.Idempotency;
 using NotifyX.Api.Services.NotificationRecipients;
 using NotifyX.Api.Services.Notifications;
@@ -66,6 +67,16 @@ public static class DependencyInjection
                     .AllowCredentials();
             });
         });
+
+        // Register Redis as the distributed cache and use a NotifyX-specific key prefix.
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration =
+                configuration.GetConnectionString("Redis");
+
+            options.InstanceName = "NotifyX:";
+        });
+
 
         return services;
     }
@@ -167,6 +178,7 @@ public static class DependencyInjection
             NotificationRecipientService>();
 
         services.AddScoped<NotificationFactory>();
+        services.AddScoped<INotificationCacheService, NotificationCacheService>();
 
         // Publisher
         services.AddScoped<
