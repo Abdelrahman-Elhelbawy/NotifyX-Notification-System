@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.BackgroundServices;
 using NotifyX.Api.Common.Exceptions;
+using NotifyX.Api.Configuration.ApiVersioning;
 using NotifyX.Api.Configuration.HealthChecks;
 using NotifyX.Api.Configuration.RateLimiting;
 using NotifyX.Api.Data;
@@ -38,6 +39,8 @@ public static class DependencyInjection
         .AddNotificationRateLimiting()
         // Register health checks to monitor API, database, and background worker availability.
         .AddNotificationHealthChecks()
+        // Register Versioning to monitor API V1. V2. V3.
+        .AddApiVersioningConfiguration()
         // Register scoped application services and their dependencies.
         .AddScopedConfiguration()
         // Register FluentValidation validators and configure automatic request validation.

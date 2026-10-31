@@ -1,11 +1,12 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using NotifyX.Api.Models.NotificationRecipient;
 using NotifyX.Api.Services.NotificationRecipients;
 
 namespace NotifyX.Api.Controllers;
 
-[Route("api/notifications")]
 [ApiController]
+[Route("api/v{version:apiVersion}/notifications")]
 public class NotificationRecipientsController(
     INotificationRecipientService service) : ControllerBase
 {
@@ -20,6 +21,7 @@ public class NotificationRecipientsController(
     /// <returns>An HTTP 204 response if successful, or a problem response if the operation fails.</returns>
     [HttpPut]
     [Route("{notificationId:guid}/read")]
+    [ApiVersion(1.0)]
     public async Task<IActionResult> UpdateReadAsync(
         [FromRoute] Guid notificationId,
         [FromBody] UpdateReadNotificationRecipientRequest request,
@@ -47,6 +49,7 @@ public class NotificationRecipientsController(
     /// <returns>An HTTP 204 response if successful, or a problem response if the operation fails.</returns>
     [HttpPut]
     [Route("{notificationId:guid}/unread")]
+    [ApiVersion(1.0)]
     public async Task<IActionResult> UpdateUnReadAsync(
         [FromRoute] Guid notificationId,
         [FromBody] UpdateReadNotificationRecipientRequest request,

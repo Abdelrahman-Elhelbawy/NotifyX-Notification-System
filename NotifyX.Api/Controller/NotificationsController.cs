@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using NotifyX.Api.Configuration.RateLimiting;
@@ -7,7 +8,7 @@ using NotifyX.Api.Services.Notifications;
 
 namespace NotifyX.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 public class NotificationsController(
     INotificationService service) : ControllerBase
@@ -22,12 +23,12 @@ public class NotificationsController(
     /// <returns>An HTTP 200 response containing the created notification, or a problem response if creation fails.</returns>
     [HttpPost]
     [Route("")]
+    [ApiVersion(1.0)]
     [EnableRateLimiting(RateLimitPolicies.CreateNotification)]
     public async Task<IActionResult> Create(
         [FromBody] CreateNotificationRequest request,
         [FromHeader(Name = "Idempotency-Key")] string idempotencyKey,
-        CancellationToken cancellationToken = default!)
-    {
+        CancellationToken cancellationToken = default){
         var result = await _service.CreateAsync(request, idempotencyKey, cancellationToken);
 
         return result.Match<IActionResult>(
@@ -47,6 +48,7 @@ public class NotificationsController(
     /// <returns>An HTTP 200 response containing the notifications, or a problem response if retrieval fails.</returns>
     [HttpGet]
     [Route("")]
+    [ApiVersion(1.0)]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationRequest request,
         CancellationToken cancellationToken = default)
@@ -72,6 +74,7 @@ public class NotificationsController(
     /// <returns>An HTTP 200 response containing the notification, or a problem response if it is not found or retrieval fails.</returns>
     [HttpGet]
     [Route("{id:guid}")]
+    [ApiVersion(1.0)]
     public async Task<IActionResult> GetById(
     [FromRoute] Guid id,
     CancellationToken cancellationToken = default)
@@ -99,6 +102,7 @@ public class NotificationsController(
     /// <returns>An HTTP 200 response when the notification is updated, or a problem response if the update fails.</returns>
     [HttpPut]
     [Route("{id:guid}")]
+    [ApiVersion(1.0)]
     [EnableRateLimiting(RateLimitPolicies.UpdateNotification)]
     public async Task<IActionResult> Update(
         [FromRoute] Guid id,
@@ -125,6 +129,7 @@ public class NotificationsController(
     /// <returns>An HTTP 200 response when the notification is deleted, or a problem response if deletion fails.</returns>
     [HttpDelete]
     [Route("{id:guid}")]
+    [ApiVersion(1.0)]
     public async Task<IActionResult> Delete(
         [FromRoute] Guid id,
         CancellationToken cancellationToken = default!)
