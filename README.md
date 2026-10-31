@@ -120,9 +120,9 @@ NotifyX follows a layered, decoupled service architecture:
 | **Real-Time Transport** | ASP.NET Core SignalR | `Microsoft.AspNetCore.SignalR` |
 | **Validation** | FluentValidation | `FluentValidation.AspNetCore` (11.3.1), `FluentValidation` (12.2.0) |
 | **API Versioning** | ASP.NET API Versioning | `Asp.Versioning.Mvc` (10.2.1), `Asp.Versioning.Mvc.ApiExplorer` (10.2.1) |
+| **API Documentation & UI** | Swagger (OpenAPI) | `Swashbuckle.AspNetCore` (10.3.1), `Microsoft.OpenApi` (2.12.0) |
 | **Result & Error Modeling**| OneOf | `OneOf` (3.0.271) |
 | **Health Checks** | ASP.NET Diagnostics | `AspNetCore.HealthChecks.SqlServer`, `AspNetCore.HealthChecks.SignalR` |
-| **API Specification** | ASP.NET OpenAPI | `Microsoft.AspNetCore.OpenApi` (11.0.0-rc.2) |
 
 ---
 
@@ -147,7 +147,8 @@ NotifyX/
 │   ├── Configuration/                # Extension methods for DI services
 │   │   ├── ApiVersioning/            # URL-segment versioning setup
 │   │   ├── HealthChecks/             # Health check registration
-│   │   └── RateLimiting/             # Token bucket & sliding window rate limiting
+│   │   ├── RateLimiting/             # Token bucket & sliding window rate limiting
+│   │   └── Swagger/                  # SwaggerGen and API versioning configuration
 │   ├── Controller/                   # API v1 Controllers (Notifications, Recipients)
 │   ├── Data/                         # EF Core DbContext, entity configurations, and migrations
 │   │   ├── Configuration/            # Fluent API configurations for tables
@@ -283,7 +284,9 @@ By default, the application listens on the ports defined in `Properties/launchSe
 - **HTTP**: `http://localhost:5050`
 - **HTTPS**: `https://localhost:7290`
 
-In development mode, OpenAPI definition endpoints are automatically exposed at `/openapi/v1.json`.
+In development mode:
+- **Interactive Swagger UI**: Explore and test API endpoints at [`http://localhost:5050/swagger`](http://localhost:5050/swagger)
+- **Swagger JSON Specification**: Available at `/swagger/v1/swagger.json`
 
 ---
 

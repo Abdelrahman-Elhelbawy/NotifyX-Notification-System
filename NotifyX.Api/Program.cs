@@ -1,4 +1,4 @@
-// using Microsoft.AspNetCore.SignalR;
+
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NotifyX.Api;
 using NotifyX.Api.Hubs;
@@ -11,49 +11,56 @@ public partial class Program
         var builderConfig = builder.Configuration;
 
         // Add services to the container.
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
-        
         builder.Services.AddControllers();
+        builder.Services.AddProblemDetails();
 
-        // Add dependencies to the container.
+        builder.Services.AddOpenApi();
+
+        // Register application dependencies and configurations.
         builder.Services.NotifyXConfiguration(builderConfig);
-
-        // builder.Services.AddSingleton<IUserIdProvider, QueryStringUserIdProvider>();
 
         var app = builder.Build();
 
+        // Configure global exception handling.
         app.UseExceptionHandler();
 
-        // Configure the HTTP request pipeline.
+        // Configure OpenAPI documentation.
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
         }
 
-        app.UseCors("NotifyXPolicy");
-
+        // Configure the HTTP request pipeline.
         app.UseHttpsRedirection();
-        app.MapControllers();
+
+        app.UseCors("NotifyXPolicy");
 
         // Apply rate limiting to incoming requests.
         app.UseRateLimiter();
 
-        // Map the notification hub for client real-time connections.
+        // Enable authentication and authorization when configured.
+        // app.UseAuthentication();
+        // app.UseAuthorization();
+
+        // Map API controllers.
+        app.MapControllers();
+
+        // Map the notification hub.
         app.MapHub<NotificationHub>("/hubs/notifications");
 
-
-        // GET /health/live: checks API liveness using health checks tagged "live".
+        // Check API liveness.
         app.MapHealthChecks("/health/live", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("live")
         });
-        // GET /health/ready: checks whether the API is ready to serve requests using checks tagged "ready".
+
+        // Check API readiness.
         app.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("ready")
         });
-        // GET /health/workers: checks background worker health using checks tagged "worker".
+
+        // Check background workers health.
         app.MapHealthChecks("/health/workers", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("worker")

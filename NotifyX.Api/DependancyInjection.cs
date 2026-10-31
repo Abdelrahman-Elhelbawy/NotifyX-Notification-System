@@ -80,7 +80,6 @@ public static class DependencyInjection
             options.InstanceName = "NotifyX:";
         });
 
-
         return services;
     }
 
