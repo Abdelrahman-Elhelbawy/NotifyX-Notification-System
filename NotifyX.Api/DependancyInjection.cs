@@ -4,6 +4,8 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using NotifyX.Api.BackgroundServices;
 using NotifyX.Api.Common.Exceptions;
+using NotifyX.Api.Configuration.HealthChecks;
+using NotifyX.Api.Configuration.RateLimiting;
 using NotifyX.Api.Data;
 using NotifyX.Api.Factories;
 using NotifyX.Api.Publishers;
@@ -21,20 +23,30 @@ namespace NotifyX.Api;
 
 public static class DependencyInjection
 {
-    /*
-        -- Add dependencies to the container.
-        -- This method is an extension method for IServiceCollection that adds various dependencies to the service collection.
-        -- It calls the AddDatabaseDependencies method to add database-related dependencies.
-    */
-    public static IServiceCollection AddConfiguration(this IServiceCollection services,
+    /// <summary>
+    /// Configures the NotifyX API dependencies in the service collection.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="configuration">Application configuration used to register database and infrastructure services.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> instance, configured with NotifyX dependencies.</returns>
+    public static IServiceCollection NotifyXConfiguration(this IServiceCollection services,
         IConfiguration configuration)
     {
         services
-            .AddScopedConfiguration()
-            .AddDatabaseConfiguration(configuration)
-            .AddDefaultConfiguration()
-            .AddFluentValidationConfig();
+        // Apply rate limiting policies to protect API endpoints from excessive requests.
+        .AddNotificationRateLimiting()
+        // Register health checks to monitor API, database, and background worker availability.
+        .AddNotificationHealthChecks()
+        // Register scoped application services and their dependencies.
+        .AddScopedConfiguration()
+        // Register FluentValidation validators and configure automatic request validation.
+        .AddFluentValidationConfig()
+        // Register global exception handling for consistent API error responses.
+        .AddExceptionHandlerConfiguration()
+        // Register and configure the application's database connection and DbContext.
+        .AddDatabaseConfiguration(configuration);
 
+        // Register the hosted background service that processes pending outbox messages.
         services.AddHostedService<OutboxBackgroundService>();
 
         // Register SignalR services for real-time communication.
@@ -92,7 +104,7 @@ public static class DependencyInjection
         -- Add default configuration to the container.
         -- This method registers the global exception handler and problem details services.
     */
-    private static IServiceCollection AddDefaultConfiguration(this IServiceCollection services)
+    private static IServiceCollection AddExceptionHandlerConfiguration(this IServiceCollection services)
     {
         // Add Configuration for Add Global Exception Handler
         services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -147,11 +159,11 @@ public static class DependencyInjection
             IdempotencyService>();
 
         services.AddScoped<
-            IOutboxService, 
+            IOutboxService,
             OutboxService>();
 
         services.AddScoped<
-            INotificationRecipientService, 
+            INotificationRecipientService,
             NotificationRecipientService>();
 
         services.AddScoped<NotificationFactory>();

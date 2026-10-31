@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using NotifyX.Api.Common.Results;
 using NotifyX.Api.Data;
 using NotifyX.Api.Entities;
-using NotifyX.Api.Models.Notifications;
+using NotifyX.Api.Models.Common;
 using NotifyX.Api.Repositories.Notifications;
 
 namespace NotifyX.Api.Repository.Notifcations;
@@ -20,12 +19,28 @@ public class NotificationRepository(
             cancellationToken);
     }
 
-    /// Retrieves all notifications asynchronously.
-    public async Task<List<Notification>> GetAllAsync(CancellationToken cancellationToken = default!)
+    /// <summary>
+    /// Retrieves a paginated list of notifications from the database.
+    /// </summary>
+    public async Task<PagedResult<Notification>> GetAllAsync(PaginationRequest request, CancellationToken cancellationToken = default)
     {
-        return await _context.Notifications
-            .AsNoTracking()
+        var query = _context.Notifications
+            .AsNoTracking();
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(n => n.CreatedAt)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<Notification>(
+            items,
+            request.PageNumber,
+            request.PageSize,
+            totalCount
+        );
     }
 
     /// Retrieves a notification by its identifier asynchronously.
@@ -57,7 +72,7 @@ public class NotificationRepository(
         existingNotification.Metadata = notification.Metadata;
         return true;
     }
-    
+
     /// Deletes a notification by its identifier asynchronously.
     public async Task<bool> DeleteAsync(Guid notificationId, CancellationToken cancellationToken = default)
     {

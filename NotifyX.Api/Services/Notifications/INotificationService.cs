@@ -1,4 +1,5 @@
 using NotifyX.Api.Common.Results;
+using NotifyX.Api.Models.Common;
 using NotifyX.Api.Models.Notifications;
 using OneOf;
 
@@ -9,36 +10,37 @@ public interface INotificationService
     /// <summary>
     /// Provides operations for creating, retrieving, updating, and deleting notifications.
     /// </summary>
-    Task<OneOf<NotificationResponse , Error>> CreateAsync(
+    Task<OneOf<NotificationResponse, Error>> CreateAsync(
         CreateNotificationRequest request,
         string idempotencyKey,
-        CancellationToken cancellationToken = default!);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all notifications.
     /// </summary>
-    Task<OneOf< List<NotificationResponse> , Error>> GetAllAsync(
-        CancellationToken cancellationToken = default!);
+    Task<OneOf<PagedResult<NotificationResponse>, Error>> GetAllAsync(
+        PaginationRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a notification by its identifier.
     /// </summary>
-    Task<OneOf<NotificationResponse , Error>> GetAsync(
+    Task<OneOf<NotificationResponse, Error>> GetAsync(
         Guid notificationId,
-        CancellationToken cancellationToken = default!);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates a notification.
     /// </summary>
-    Task<OneOf<NotificationResponse , Error>> UpdateAsync(
+    Task<OneOf<NotificationResponse, Error>> UpdateAsync(
         Guid notificationId,
         UpdateNotificationRequest request,
-        CancellationToken cancellationToken = default!);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a notification by its identifier.
     /// </summary>
-    Task<OneOf<NotificationResponse , Error>> DeleteAsync(
+    Task<OneOf<NotificationResponse, Error>> DeleteAsync(
         Guid notificationId,
-        CancellationToken cancellationToken = default!);
+        CancellationToken cancellationToken = default);
 }

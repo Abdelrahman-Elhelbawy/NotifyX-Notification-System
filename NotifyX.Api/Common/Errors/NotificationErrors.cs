@@ -51,4 +51,10 @@ public static class NotificationErrors
             "Notification.IdempotencyRequestInProgress",
             "A request with this Idempotency-Key is already in progress.",
             StatusCodes.Status409Conflict);
+    public static readonly Error InvalidPaginationParameters =
+        new(
+            "Notification.InvalidPaginationParameters",
+            "this Request with Invalid Pagination Parameters",
+            StatusCodes.Status409Conflict);
+    
 }

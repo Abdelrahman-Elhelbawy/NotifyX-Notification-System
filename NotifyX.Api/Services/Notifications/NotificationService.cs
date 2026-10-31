@@ -7,6 +7,7 @@ using NotifyX.Api.Data;
 using NotifyX.Api.Entities;
 using NotifyX.Api.Entities.Enums;
 using NotifyX.Api.Factories;
+using NotifyX.Api.Models.Common;
 using NotifyX.Api.Models.Notifications;
 using NotifyX.Api.Publishers;
 using NotifyX.Api.Repositories.Notifications;
@@ -153,25 +154,40 @@ public class NotificationService(
         return result;
     }
 
+
     /// <summary>
-    /// Retrieves all notifications currently available in the repository for the API consumers.
+    /// Retrieves a paginated list of notifications available in the repository.
     /// </summary>
+    /// <param name="pageNumber">The requested page number (starting from 1).</param>
+    /// <param name="pageSize">The number of notifications per page.</param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the retrieval operation if the request is aborted.
     /// </param>
     /// <returns>
-    /// A successful result containing the list of notification payloads, or an empty list when no notifications exist.
+    /// A successful result containing the paginated notification payloads, or an Error.
     /// </returns>
-    public async Task<OneOf<List<NotificationResponse>, Error>> GetAllAsync(CancellationToken cancellationToken = default!)
+    public async Task<OneOf<PagedResult<NotificationResponse>, Error>> GetAllAsync(PaginationRequest request, CancellationToken cancellationToken = default)
     {
-        // TODO : Add Pagnation (skip)
-        var result = await _repository.GetAllAsync(cancellationToken);
+        if (request.PageNumber < 1 || request.PageSize < 1 || request.PageSize > 100)
+            return NotificationErrors.InvalidPaginationParameters;
 
-        var response = result
-            .Select(notification => BuildResponse(notification))
+        var result = await _repository.GetAllAsync(
+            request,
+            cancellationToken
+        );
+
+        var response = result.Items
+            .Select(BuildResponse)
             .ToList();
 
-        return response;
+        var pagedResponse = new PagedResult<NotificationResponse>(
+            response,
+            result.PageNumber,
+            result.PageSize,
+            result.TotalCount
+        );
+
+        return pagedResponse;
     }
 
 

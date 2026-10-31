@@ -1,4 +1,5 @@
 using NotifyX.Api.Entities;
+using NotifyX.Api.Models.Common;
 
 namespace NotifyX.Api.Repositories.Notifications;
 
@@ -15,7 +16,8 @@ public interface INotificationRepository
     /// <summary>
     /// Retrieves all notifications asynchronously.
     /// </summary>
-    Task<List<Notification>> GetAllAsync(
+    Task<PagedResult<Notification>> GetAllAsync(
+        PaginationRequest request,
         CancellationToken cancellationToken = default);
 
     /// <summary>
