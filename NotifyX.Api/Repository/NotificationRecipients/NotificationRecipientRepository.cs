@@ -8,6 +8,9 @@ public class NotificationRecipientRepository(ApplicationDbContext context) : INo
 {
     public ApplicationDbContext _context = context;
 
+    /// <summary>
+    /// Marks a notification as read for a specific user.
+    /// </summary>
     public async Task<bool> ReadAsync(Guid notificationId, string userId, CancellationToken cancellationToken = default)
     {
         var recipient = await _context.NotificationRecipients
@@ -29,6 +32,10 @@ public class NotificationRecipientRepository(ApplicationDbContext context) : INo
         return true;
     }
 
+
+    /// <summary>
+    /// Marks a notification as unread for a specific user.
+    /// </summary>
     public async Task<bool> UnReadAsync(Guid notificationId, string userId, CancellationToken cancellationToken = default)
     {
         var recipient = await _context.NotificationRecipients
@@ -50,6 +57,10 @@ public class NotificationRecipientRepository(ApplicationDbContext context) : INo
         return true;
     }
 
+
+    /// <summary>
+    /// Retrieves a notification recipient for a specific notification and user.
+    /// </summary>
     public async Task<NotificationRecipient?> GetAsync(Guid notificationId, string userId, CancellationToken cancellationToken = default)
     {
         return await _context.NotificationRecipients
@@ -59,10 +70,28 @@ public class NotificationRecipientRepository(ApplicationDbContext context) : INo
                 cancellationToken);
     }
 
-    /// Saves pending Notification Recipient changes asynchronously.
+
+    /// <summary>
+    /// Retrieves the number of unread recipients for a specific notification and user.
+    /// </summary>
+    public async Task<int> UnReadCountAsync(Guid notificationId, string userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.NotificationRecipients
+            .AsNoTracking()
+            .CountAsync(n =>
+                n.NotificationId == notificationId &&
+                n.UserId == userId &&
+                n.IsRead == false &&
+                n.ReadAtUtc == null,
+                cancellationToken);
+    }
+
+
+    /// <summary>
+    /// Saves pending notification recipient changes asynchronously.
+    /// </summary>
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _context.SaveChangesAsync(cancellationToken);
     }
-
 }

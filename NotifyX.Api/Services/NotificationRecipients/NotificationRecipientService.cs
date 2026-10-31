@@ -48,6 +48,12 @@ public class NotificationRecipientService(
         return BuildResponse(recipient);
     }
 
+    public async Task<OneOf<int, Error>> UnReadCountAsync(Guid NotificationId, string userId, CancellationToken cancellationToken = default)
+    {
+        var CountOfUnRead = await _repository.UnReadCountAsync(NotificationId, userId, cancellationToken);
+        return CountOfUnRead;
+    }
+
     private static NotificationRecipientResponse BuildResponse(NotificationRecipient notificationRecipient)
     {
         return new NotificationRecipientResponse(

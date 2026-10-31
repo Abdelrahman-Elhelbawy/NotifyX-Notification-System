@@ -30,6 +30,7 @@ public class NotificationRepository(
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .Where(n => n.IsDeleted)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)

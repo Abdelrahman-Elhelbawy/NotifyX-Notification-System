@@ -15,4 +15,9 @@ public interface INotificationRecipientService
         Guid NotificationId,
         string userId,
         CancellationToken cancellationToken = default);
+
+    Task<OneOf<int, Error>> UnReadCountAsync(
+        Guid NotificationId,
+        string userId,
+        CancellationToken cancellationToken = default);
 }

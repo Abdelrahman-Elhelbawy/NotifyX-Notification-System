@@ -4,6 +4,9 @@ namespace NotifyX.Api.Repository.NotificationRecipients;
 
 public interface INotificationRecipientRepository
 {
+    /// <summary>
+    /// Get a notification recipient asynchronously.
+    /// </summary>
     Task<NotificationRecipient?> GetAsync(
         Guid notificationId,
         string userId,
@@ -19,7 +22,19 @@ public interface INotificationRecipientRepository
         CancellationToken cancellationToken = default
     );
 
+    /// <summary>
+    /// Updates the unread status of a notification asynchronously.
+    /// </summary>
     Task<bool> UnReadAsync(
+        Guid notificationId,
+        string userId,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Gets a unread count of a notification recipient asynchronously.
+    /// </summary>
+    Task<int> UnReadCountAsync(
         Guid notificationId,
         string userId,
         CancellationToken cancellationToken = default
